@@ -2,12 +2,12 @@
     "versionLabel": "1.0",
     "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
     "appKeys": {},
-    "longName": "Kneejah Watch",
+    "longName": "SimpleClock",
     "versionCode": 1,
     "capabilities": [
-        ""
+        "configurable"
     ],
-    "shortName": "Kneejah Watch",
+    "shortName": "SimpleClock",
     "companyName": "kneejah",
     "watchapp": {
         "watchface": true
