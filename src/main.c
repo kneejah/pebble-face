@@ -117,11 +117,9 @@ void window_load(Window *win) {
 	layer_add_child(window_get_root_layer(window), (Layer*) inv_layer);
 	
 	// load up a value before the first tick
-	struct tm *t;
-	time_t temp;
-	temp = time(NULL);
-	t = localtime(&temp);
-	tick_handler(t, MINUTE_UNIT);
+	time_t temp = time(NULL);
+	struct tm *t = localtime(&temp);
+	tick_handler(t, SECOND_UNIT);
 }
 
 void window_unload(Window *win) {
