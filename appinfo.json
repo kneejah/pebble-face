@@ -1,14 +1,20 @@
 {
     "versionLabel": "1.0",
     "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
-    "appKeys": {},
+    "appKeys": {
+        "display_bluetooth": 4,
+        "color_scheme": 1,
+        "display_battery": 3,
+        "display_transitions": 5,
+        "display_seconds": 2
+    },
     "longName": "SimpleClock",
     "versionCode": 1,
     "capabilities": [
         "configurable"
     ],
     "shortName": "SimpleClock",
-    "companyName": "kneejah",
+    "companyName": "Subtly.me",
     "watchapp": {
         "watchface": true
     },
