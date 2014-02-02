@@ -1,0 +1,18 @@
+{
+    "versionLabel": "1.0",
+    "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
+    "appKeys": {},
+    "longName": "Kneejah Watch",
+    "versionCode": 1,
+    "capabilities": [
+        ""
+    ],
+    "shortName": "Kneejah Watch",
+    "companyName": "kneejah",
+    "watchapp": {
+        "watchface": true
+    },
+    "resources": {
+        "media": []
+    }
+}
