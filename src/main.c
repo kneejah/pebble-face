@@ -37,6 +37,7 @@ static int display_bluetooth   = 0;
 static int display_transitions = 1;
 
 GRect text_box;
+static int showing_date = 0;
 
 void debug_log(char *data) {
 	if (DEBUG_MODE == 1) {
@@ -179,13 +180,21 @@ void update_bluetooth_layer(bool connected) {
 }
 
 void hide_date_layer(void *data) {
+	debug_log("In hide_date_layer().");
 	GRect start = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
 	GRect end = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
     animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
+	showing_date = 0;
 }
 
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
 	debug_log("In accel_tap_handler().");
+	
+	if (showing_date == 1) {
+		debug_log("Not reshowing date slider.");
+		return;
+	}
+	showing_date = 1;
 	
 	GRect start = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
 	GRect end = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
