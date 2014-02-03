@@ -1,3 +1,11 @@
+var DEBUG_MODE = 1;
+
+function debug_log(msg) {
+	if (DEBUG_MODE == 1) {
+		console.log(msg);
+	}
+}
+
 var COLOR_SCHEME_BLACK      = 0,
 	COLOR_SCHEME_WHITE      = 1,
 	DISPLAY_SECONDS_OFF     = 0,
@@ -22,40 +30,49 @@ var send_in_progress = false;
 
 function send_config() {
     if (send_in_progress == true) {
-        return console.log("Sending config already in progress.");
+        return debug_log("Sending config already in progress.");
     }
 	
 	send_in_progress = true;
-	console.log("Sending config: " + JSON.stringify(config)); 
+	debug_log("Sending config: " + JSON.stringify(config)); 
 
     Pebble.sendAppMessage(config,
         function ack(e) {
-			console.log("Successfully delivered message: " + JSON.stringify(e.data));
+			debug_log("Successfully delivered message: " + JSON.stringify(e.data));
             send_in_progress = false;
         },
         function nack(e) {
-			console.log("Unable to deliver message: " + JSON.stringify(e));
+			debug_log("Unable to deliver message: " + JSON.stringify(e));
             send_in_progress = false;
         });
 }
 
+Pebble.addEventListener("appmessage",
+    function(e) {
+		debug_log("Got message: " + JSON.stringify(e.payload));
+		if (e.payload.get_config_values && e.payload.get_config_values == 1) {
+			send_config();
+		}
+	}
+);
+
 Pebble.addEventListener("ready", function() {
+	debug_log("In ready event.");
 	var json = window.localStorage.getItem(settings_name);
-	console.log("In ready event.");
 	
 	if (typeof json === 'string') {
 		config = JSON.parse(json);
-		console.log("Loaded config: " + JSON.stringify(config));
+		debug_log("Loaded config: " + JSON.stringify(config));
     }
 });
 
 Pebble.addEventListener("showConfiguration", function() {
-	console.log("In showConfiguration.");
+	debug_log("In showConfiguration.");
 	var url = 'http://subtly.me/pebble/simple-clock.html';
 	if (config) {
 		url = url + "#" + encodeURIComponent(JSON.stringify(config));
 	}
-	console.log("Opening url: " + url);
+	debug_log("Opening url: " + url);
 	Pebble.openURL(url);
 });
 
@@ -63,7 +80,7 @@ Pebble.addEventListener("webviewclosed", function(e) {
 	var json = decodeURIComponent(e.response);
 	config = JSON.parse(json);
 	
-	console.log("Storing config: " + json);
+	debug_log("Storing config: " + json);
 	window.localStorage.setItem(settings_name, json);
 	
 	send_config();
