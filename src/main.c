@@ -13,7 +13,8 @@
 #define GET_CONFIG_VALUES   100
 
 Window *window;
-TextLayer *text_layer;
+TextLayer *time_layer;
+TextLayer *date_layer;
 TextLayer *battery_layer;
 TextLayer *bluetooth_layer;
 InverterLayer *inv_layer;
@@ -25,6 +26,7 @@ char format_12[] = "%l:%M %P";
 char format_24[] = "%H:%M";
 
 char time_buffer[] = "00:00:00 AM";
+char date_buffer[] = "00/00/0000";
 char batt_buffer[] = "100%+";
 
 // defaults, same as in the js side of things
@@ -67,34 +69,34 @@ void animate_layer(Layer *layer, GRect *start, GRect *finish, int duration, int 
 
 void animate_left(void) {
     GRect finish = GRect(-144, 69, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &text_box, &finish, 500, 500);
+    animate_layer(text_layer_get_layer(time_layer), &text_box, &finish, 500, 500);
 	
 	GRect start = GRect(144, 69, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &start, &text_box, 500, 1000);
+    animate_layer(text_layer_get_layer(time_layer), &start, &text_box, 500, 1000);
 }
 
 void animate_right(void) {
     GRect finish = GRect(144, 69, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &text_box, &finish, 500, 500);
+    animate_layer(text_layer_get_layer(time_layer), &text_box, &finish, 500, 500);
 	
 	GRect start = GRect(-144, 69, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &start, &text_box, 500, 1000);
+    animate_layer(text_layer_get_layer(time_layer), &start, &text_box, 500, 1000);
 }
 
 void animate_up(void) {
     GRect finish = GRect(0, -99, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &text_box, &finish, 500, 500);
+    animate_layer(text_layer_get_layer(time_layer), &text_box, &finish, 500, 500);
 	
 	GRect start = GRect(0, 237, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &start, &text_box, 500, 1000);
+    animate_layer(text_layer_get_layer(time_layer), &start, &text_box, 500, 1000);
 }
 
 void animate_down(void) {
     GRect finish = GRect(0, 237, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &text_box, &finish, 500, 500);
+    animate_layer(text_layer_get_layer(time_layer), &text_box, &finish, 500, 500);
 	
 	GRect start = GRect(0, -99, 144, 168);
-    animate_layer(text_layer_get_layer(text_layer), &start, &text_box, 500, 1000);
+    animate_layer(text_layer_get_layer(time_layer), &start, &text_box, 500, 1000);
 }
 
 void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -117,8 +119,12 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 		}
 	}
  	
-	// update the text on the screen
-	text_layer_set_text(text_layer, time_buffer);
+	// update the time text on the screen
+	text_layer_set_text(time_layer, time_buffer);
+	
+	// update the date text on the screen
+	strftime(date_buffer, sizeof("00/00/0000"), "%m/%d/%Y", tick_time);
+	text_layer_set_text(date_layer, date_buffer);
 	
 	int seconds = tick_time->tm_sec;
 	if (seconds == 59 && display_transitions == 1) {
@@ -172,15 +178,41 @@ void update_bluetooth_layer(bool connected) {
 	}
 }
 
+void hide_date_layer(void *data) {
+	GRect start = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect end = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+    animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
+}
+
+void accel_tap_handler(AccelAxisType axis, int32_t direction) {
+	debug_log("In accel_tap_handler().");
+	
+	GRect start = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect end = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+    animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
+	
+	// in 3 seconds, make the date value slide away
+	app_timer_register(3000, hide_date_layer, NULL);
+}
+
 void window_load(Window *win) {
 	
-	// set up text layer
-	text_layer = text_layer_create(text_box);
-	text_layer_set_background_color(text_layer, GColorClear);
-	text_layer_set_text_color(text_layer, GColorBlack);
-	text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
-	text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-	layer_add_child(window_get_root_layer(window), (Layer*) text_layer);
+	// set up time layer
+	time_layer = text_layer_create(text_box);
+	text_layer_set_background_color(time_layer, GColorClear);
+	text_layer_set_text_color(time_layer, GColorBlack);
+	text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
+	text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	layer_add_child(window_get_root_layer(window), (Layer*) time_layer);
+	
+	// set up date layer
+	GRect date_box = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	date_layer = text_layer_create(date_box);
+	text_layer_set_background_color(date_layer, GColorClear);
+	text_layer_set_text_color(date_layer, GColorBlack);
+	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
+	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	layer_add_child(window_get_root_layer(window), (Layer*) date_layer);
 	
 	// set up battery layer
 	GRect battery_box = GRect(5, 0, 50, 50);
@@ -336,6 +368,8 @@ void handle_init(void) {
 	bluetooth_connection_service_subscribe(&update_bluetooth_layer);
   	update_bluetooth_layer(bluetooth_connection_service_peek());
 	
+	accel_tap_service_subscribe(&accel_tap_handler);
+	
 	update_inverter_layer();
 	
 	tick_timer_service_subscribe(SECOND_UNIT, (TickHandler) tick_handler);
@@ -344,11 +378,13 @@ void handle_init(void) {
 void handle_deinit(void) {
 	battery_state_service_unsubscribe();
 	bluetooth_connection_service_unsubscribe();
+	accel_tap_service_unsubscribe();
 	
 	inverter_layer_destroy(inv_layer);
 	text_layer_destroy(bluetooth_layer);
 	text_layer_destroy(battery_layer);
-	text_layer_destroy(text_layer);
+	text_layer_destroy(date_layer);
+	text_layer_destroy(time_layer);
 	window_destroy(window);
 }
 
