@@ -181,7 +181,7 @@ void update_bluetooth_layer(bool connected) {
 
 void hide_date_layer(void *data) {
 	debug_log("In hide_date_layer().");
-	GRect start = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect start = GRect(0, 143, PEBBLE_WIDTH, PEBBLE_HEIGHT);
 	GRect end = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
     animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
 	showing_date = 0;
@@ -197,7 +197,7 @@ void accel_tap_handler(AccelAxisType axis, int32_t direction) {
 	showing_date = 1;
 	
 	GRect start = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
-	GRect end = GRect(0, 141, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect end = GRect(0, 143, PEBBLE_WIDTH, PEBBLE_HEIGHT);
     animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
 	
 	// in 3 seconds, make the date value slide away
@@ -220,7 +220,7 @@ void window_load(Window *win) {
 	text_layer_set_background_color(date_layer, GColorClear);
 	text_layer_set_text_color(date_layer, GColorBlack);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
-	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	layer_add_child(window_get_root_layer(window), (Layer*) date_layer);
 	
 	// set up battery layer
