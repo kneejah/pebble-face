@@ -11,15 +11,17 @@
 	
 Window *window;
 TextLayer *text_layer;
+TextLayer *battery_layer;
 InverterLayer *inv_layer;
-
-char buffer[] = "00:00:00 AM";
 
 char format_12_secs[] = "%l:%M:%S %P";
 char format_24_secs[] = "%H:%M:%S";
 
 char format_12[] = "%l:%M %P";
 char format_24[] = "%H:%M";
+
+char time_buffer[] = "00:00:00 AM";
+char batt_buffer[] = "100%+";
 
 // defaults, same as in the js side of things
 static int color_scheme        = 0;
@@ -90,23 +92,23 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	
 	if (display_seconds == 1) {
 		if (use_24_hour == true) {
-			strftime(buffer, sizeof("00:00:00"), format_24_secs, tick_time);
+			strftime(time_buffer, sizeof("00:00:00"), format_24_secs, tick_time);
 		}
 		else {
-			strftime(buffer, sizeof("00:00:00 AM"), format_12_secs, tick_time);
+			strftime(time_buffer, sizeof("00:00:00 AM"), format_12_secs, tick_time);
 		}
 	}
 	else if (display_seconds == 0) {
 		if (use_24_hour == true) {
-			strftime(buffer, sizeof("00:00"), format_24, tick_time);
+			strftime(time_buffer, sizeof("00:00"), format_24, tick_time);
 		}
 		else {
-			strftime(buffer, sizeof("00:00 AM"), format_12, tick_time);
+			strftime(time_buffer, sizeof("00:00 AM"), format_12, tick_time);
 		}
 	}
  	
 	// update the text on the screen
-	text_layer_set_text(text_layer, buffer);
+	text_layer_set_text(text_layer, time_buffer);
 	
 	int seconds = tick_time->tm_sec;
 	if (seconds == 59 && display_transitions == 1) {
@@ -127,12 +129,23 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	}
 }
 
-void handle_inverter_layer(void) {
+void update_inverter_layer(void) {
 	if (color_scheme == 0) {
 		layer_set_hidden(inverter_layer_get_layer(inv_layer), false);
 	}
 	else if (color_scheme == 1) {
 		layer_set_hidden(inverter_layer_get_layer(inv_layer), true);
+	}
+}
+
+void update_battery_layer(BatteryChargeState charge_state) {
+	if (display_battery == 1) {
+		layer_set_hidden(text_layer_get_layer(battery_layer), false);
+		snprintf(batt_buffer, sizeof(batt_buffer), "%d%%%s", charge_state.charge_percent, charge_state.is_charging ? "+" : "");
+		text_layer_set_text(battery_layer, batt_buffer);
+	}
+	else if (display_battery == 0) {
+		layer_set_hidden(text_layer_get_layer(battery_layer), true);
 	}
 }
 
@@ -146,11 +159,19 @@ void window_load(Window *win) {
 	text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
 	layer_add_child(window_get_root_layer(window), (Layer*) text_layer);
 	
+	// set up battery layer
+	GRect battery_box = GRect(2, 0, 50, 50);
+	battery_layer = text_layer_create(battery_box);
+	text_layer_set_background_color(battery_layer, GColorClear);
+	text_layer_set_text_color(battery_layer, GColorBlack);
+	text_layer_set_text_alignment(battery_layer, GTextAlignmentLeft);
+	text_layer_set_font(battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	layer_add_child(window_get_root_layer(window), (Layer*) battery_layer);
+	
 	// set up inverter layer
 	inv_layer = inverter_layer_create(GRect(0, 0, PEBBLE_WIDTH, PEBBLE_HEIGHT));
 	layer_add_child(window_get_root_layer(window), (Layer*) inv_layer);
-	
-	handle_inverter_layer();
+	update_inverter_layer();
 	
 	// load up a value before the first tick
 	time_t temp = time(NULL);
@@ -210,7 +231,8 @@ void appmessage_callback(DictionaryIterator *received, void *context) {
         tuple = dict_read_next(received);
     }
 	
-	handle_inverter_layer();
+	update_battery_layer(battery_state_service_peek());
+	update_inverter_layer();
 }
 
 void handle_init(void) {
@@ -229,11 +251,19 @@ void handle_init(void) {
     });
 	window_stack_push(window, true);
 	
+	battery_state_service_subscribe(&update_battery_layer);
+  	update_battery_layer(battery_state_service_peek());
+	
+	update_inverter_layer();
+	
 	tick_timer_service_subscribe(SECOND_UNIT, (TickHandler) tick_handler);
 }
 
 void handle_deinit(void) {
+	battery_state_service_unsubscribe();
+	
 	inverter_layer_destroy(inv_layer);
+	text_layer_destroy(battery_layer);
 	text_layer_destroy(text_layer);
 	window_destroy(window);
 }
