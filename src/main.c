@@ -229,7 +229,7 @@ void request_config_values(void *data) {
   	app_message_outbox_send();
 }
 
-// pulls in any presisted configs, if they exist
+// pulls in any persisted configs, if they exist
 void setup_config(void) {
 	debug_log("In setup_config().");
 	
