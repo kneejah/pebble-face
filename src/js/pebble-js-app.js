@@ -15,14 +15,19 @@ var COLOR_SCHEME_BLACK      = 0,
 	DISPLAY_BLUETOOTH_OFF   = 0,
 	DISPLAY_BLUETOOTH_ON    = 1,
 	DISPLAY_TRANSITIONS_OFF = 0,
-	DISPLAY_TRANSITIONS_ON  = 1;
+	DISPLAY_TRANSITIONS_ON  = 1,
+	ALWAYS_SHOW_INFO_OFF    = 0,
+	ALWAYS_SHOW_INFO_ON     = 1;
 
-var config = {
+var version = "1.1";
+var config = {};
+var default_config = {
 	color_scheme        : COLOR_SCHEME_BLACK,
 	display_seconds     : DISPLAY_SECONDS_OFF,
 	display_battery     : DISPLAY_BATTERY_OFF,
 	display_bluetooth   : DISPLAY_BLUETOOTH_OFF,
-	display_transitions : DISPLAY_TRANSITIONS_ON
+	display_transitions : DISPLAY_TRANSITIONS_ON,
+	always_show_info    : ALWAYS_SHOW_INFO_OFF
 };
 
 var settings_name = "simple_clock_settings_v1";
@@ -47,6 +52,14 @@ function send_config() {
         });
 }
 
+function merge(set1, set2) {
+  	for (var key in set2){
+    	if (set2.hasOwnProperty(key))
+      		set1[key] = set2[key];
+  	}
+  	return set1
+}
+
 Pebble.addEventListener("appmessage",
     function(e) {
 		debug_log("Got message: " + JSON.stringify(e.payload));
@@ -61,14 +74,19 @@ Pebble.addEventListener("ready", function() {
 	var json = window.localStorage.getItem(settings_name);
 	
 	if (typeof json === 'string') {
-		config = JSON.parse(json);
+		config = merge(default_config, JSON.parse(json));
 		debug_log("Loaded config: " + JSON.stringify(config));
     }
 });
 
 Pebble.addEventListener("showConfiguration", function() {
 	debug_log("In showConfiguration.");
-	var url = 'http://subtly.me/pebble/simple-clock.html';
+
+	var url = 'http://subtly.me/pebble/simple-clock-v' + version + '.html';
+	
+	if (DEBUG_MODE == 1) {
+		url = 'http://subtly.me/pebble/simple-clock-v' + version + '_debug.html';
+	}
 	if (config) {
 		url = url + "#" + encodeURIComponent(JSON.stringify(config));
 	}

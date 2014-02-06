@@ -1,16 +1,17 @@
 {
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
     "appKeys": {
-        "get_config_values": 100,
+        "always_show_info": 6,
         "display_seconds": 2,
+        "get_config_values": 100,
         "display_bluetooth": 4,
         "display_battery": 3,
         "color_scheme": 1,
         "display_transitions": 5
     },
     "longName": "SimpleTextClock",
-    "versionCode": 1,
+    "versionCode": 2,
     "capabilities": [
         "configurable"
     ],

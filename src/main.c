@@ -10,6 +10,7 @@
 #define DISPLAY_BATTERY     3
 #define DISPLAY_BLUETOOTH   4
 #define DISPLAY_TRANSITIONS 5
+#define ALWAYS_SHOW_INFO    6
 #define GET_CONFIG_VALUES   100
 
 Window *window;
@@ -35,9 +36,10 @@ static int display_seconds     = 0;
 static int display_battery     = 0;
 static int display_bluetooth   = 0;
 static int display_transitions = 1;
+static int always_show_info    = 0;
 
 GRect text_box;
-static int showing_date = 0;
+static int showing_info = 0;
 
 void debug_log(char *data) {
 	if (DEBUG_MODE == 1) {
@@ -179,29 +181,66 @@ void update_bluetooth_layer(bool connected) {
 	}
 }
 
-void hide_date_layer(void *data) {
-	debug_log("In hide_date_layer().");
-	GRect start = GRect(0, 143, PEBBLE_WIDTH, PEBBLE_HEIGHT);
-	GRect end = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+void hide_info_layers(void *data) {
+	debug_log("In hide_info_layers().");
+	
+	// hide the date layer
+	GRect start = GRect(0, 143,           PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect end   = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
     animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
-	showing_date = 0;
+	
+	// hide the battery layer
+	GRect start2 = GRect(5,   0, 50, 50);
+	GRect end2   = GRect(5, -50, 50, 50);
+    animate_layer(text_layer_get_layer(battery_layer), &start2, &end2, 500, 0);
+	
+	// hide the bluetooth layer
+	GRect start3 = GRect(89,   0, 50, 50);
+	GRect end3   = GRect(89, -50, 50, 50);
+    animate_layer(text_layer_get_layer(bluetooth_layer), &start3, &end3, 500, 0);
+	
+	showing_info = 0;
+}
+
+void show_info_layers(void) {
+	debug_log("In showing_info_layers().");
+	
+	// show the date layer
+	GRect start = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+	GRect end   = GRect(0,           143, PEBBLE_WIDTH, PEBBLE_HEIGHT);
+    animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
+	
+	// show the battery layer
+	GRect start2 = GRect(5, -50, 50, 50);
+	GRect end2   = GRect(5,   0, 50, 50);
+    animate_layer(text_layer_get_layer(battery_layer), &start2, &end2, 500, 0);
+	
+	// show the bluetooth layer
+	GRect start3 = GRect(89, -50, 50, 50);
+	GRect end3   = GRect(89,   0, 50, 50);
+    animate_layer(text_layer_get_layer(bluetooth_layer), &start3, &end3, 500, 0);
+	
+	// in 3 seconds, make the layers slide away if it's not pinned
+	if (always_show_info == 0) {
+		app_timer_register(3000, hide_info_layers, NULL);
+	}
 }
 
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
 	debug_log("In accel_tap_handler().");
 	
-	if (showing_date == 1) {
-		debug_log("Not reshowing date slider.");
+	// don't do anything if it's always going to show the info
+	if (always_show_info == 1) {
 		return;
 	}
-	showing_date = 1;
 	
-	GRect start = GRect(0, PEBBLE_HEIGHT, PEBBLE_WIDTH, PEBBLE_HEIGHT);
-	GRect end = GRect(0, 143, PEBBLE_WIDTH, PEBBLE_HEIGHT);
-    animate_layer(text_layer_get_layer(date_layer), &start, &end, 500, 0);
+	if (showing_info == 1) {
+		debug_log("Not reshowing info layers.");
+		return;
+	}
+	showing_info = 1;
 	
-	// in 3 seconds, make the date value slide away
-	app_timer_register(3000, hide_date_layer, NULL);
+	show_info_layers();
 }
 
 void window_load(Window *win) {
@@ -224,7 +263,7 @@ void window_load(Window *win) {
 	layer_add_child(window_get_root_layer(window), (Layer*) date_layer);
 	
 	// set up battery layer
-	GRect battery_box = GRect(5, 0, 50, 50);
+	GRect battery_box = GRect(5, -50, 50, 50);
 	battery_layer = text_layer_create(battery_box);
 	text_layer_set_background_color(battery_layer, GColorClear);
 	text_layer_set_text_color(battery_layer, GColorBlack);
@@ -233,7 +272,7 @@ void window_load(Window *win) {
 	layer_add_child(window_get_root_layer(window), (Layer*) battery_layer);
 	
 	// set up bluetooth layer
-	GRect bluetooth_box = GRect(89, 0, 50, 50);
+	GRect bluetooth_box = GRect(89, -50, 50, 50);
 	bluetooth_layer = text_layer_create(bluetooth_box);
 	text_layer_set_background_color(bluetooth_layer, GColorClear);
 	text_layer_set_text_color(bluetooth_layer, GColorBlack);
@@ -244,12 +283,19 @@ void window_load(Window *win) {
 	// set up inverter layer
 	inv_layer = inverter_layer_create(GRect(0, 0, PEBBLE_WIDTH, PEBBLE_HEIGHT));
 	layer_add_child(window_get_root_layer(window), (Layer*) inv_layer);
+	
+	update_battery_layer(battery_state_service_peek());
+	update_bluetooth_layer(bluetooth_connection_service_peek());
 	update_inverter_layer();
 	
 	// load up a value before the first tick
 	time_t temp = time(NULL);
 	struct tm *t = localtime(&temp);
 	tick_handler(t, SECOND_UNIT);
+	
+	if (always_show_info == 1) {
+		show_info_layers();
+	} 
 }
 
 void window_unload(Window *win) {
@@ -282,12 +328,14 @@ void setup_config(void) {
 	else {
 		has_config_values = false;
 	}
+	
 	if (persist_exists(DISPLAY_SECONDS)) {
 		display_seconds = persist_read_int(DISPLAY_SECONDS);
 	}
 	else {
 		has_config_values = false;
 	}
+	
 	if (persist_exists(DISPLAY_BATTERY)) {
 		display_battery = persist_read_int(DISPLAY_BATTERY);
 	}
@@ -300,8 +348,16 @@ void setup_config(void) {
 	else {
 		has_config_values = false;
 	}
+	
 	if (persist_exists(DISPLAY_TRANSITIONS)) {
 		display_transitions = persist_read_int(DISPLAY_TRANSITIONS);
+	}
+	else {
+		has_config_values = false;
+	}
+	
+	if (persist_exists(ALWAYS_SHOW_INFO)) {
+		always_show_info = persist_read_int(ALWAYS_SHOW_INFO);
 	}
 	else {
 		has_config_values = false;
@@ -315,6 +371,8 @@ void setup_config(void) {
 // callback that gets fired on message recieved from phone
 void appmessage_callback(DictionaryIterator *received, void *context) {
 	debug_log("In appmessage_callback().");
+	
+	int old_always_show_info = always_show_info;
 	
 	Tuple *tuple = dict_read_first(received);
   	while (tuple) {
@@ -339,18 +397,31 @@ void appmessage_callback(DictionaryIterator *received, void *context) {
         		display_transitions = tuple->value->int32;
 				persist_write_int(DISPLAY_TRANSITIONS, display_transitions);
         		break;
+			case ALWAYS_SHOW_INFO:
+        		always_show_info = tuple->value->int32;
+				persist_write_int(ALWAYS_SHOW_INFO, display_transitions);
+        		break;
         }
         tuple = dict_read_next(received);
     }
-	
-	update_battery_layer(battery_state_service_peek());
-	update_bluetooth_layer(bluetooth_connection_service_peek());
-	update_inverter_layer();
 	
 	// tick, in case the display seconds toggle was changed
 	time_t temp = time(NULL);
 	struct tm *t = localtime(&temp);
 	tick_handler(t, SECOND_UNIT);
+	
+	update_battery_layer(battery_state_service_peek());
+	update_bluetooth_layer(bluetooth_connection_service_peek());
+	update_inverter_layer();
+	
+	if (old_always_show_info != always_show_info) {
+		if (always_show_info == 1) {
+			show_info_layers();
+		}
+		else if (always_show_info == 0) {
+			hide_info_layers(NULL);
+		}
+	}
 }
 
 void handle_init(void) {
