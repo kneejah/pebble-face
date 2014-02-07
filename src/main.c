@@ -399,7 +399,7 @@ void appmessage_callback(DictionaryIterator *received, void *context) {
         		break;
 			case ALWAYS_SHOW_INFO:
         		always_show_info = tuple->value->int32;
-				persist_write_int(ALWAYS_SHOW_INFO, display_transitions);
+				persist_write_int(ALWAYS_SHOW_INFO, always_show_info);
         		break;
         }
         tuple = dict_read_next(received);
