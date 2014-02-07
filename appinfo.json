@@ -1,5 +1,5 @@
 {
-    "versionLabel": "1.1",
+    "versionLabel": "1.2",
     "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
     "appKeys": {
         "always_show_info": 6,
@@ -11,7 +11,7 @@
         "display_transitions": 5
     },
     "longName": "SimpleTextClock",
-    "versionCode": 2,
+    "versionCode": 3,
     "capabilities": [
         "configurable"
     ],
