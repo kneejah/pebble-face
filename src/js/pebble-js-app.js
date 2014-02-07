@@ -1,4 +1,4 @@
-var DEBUG_MODE = 1;
+var DEBUG_MODE = 0;
 
 function debug_log(msg) {
 	if (DEBUG_MODE == 1) {
@@ -24,8 +24,8 @@ var config = {};
 var default_config = {
 	color_scheme        : COLOR_SCHEME_BLACK,
 	display_seconds     : DISPLAY_SECONDS_OFF,
-	display_battery     : DISPLAY_BATTERY_OFF,
-	display_bluetooth   : DISPLAY_BLUETOOTH_OFF,
+	display_battery     : DISPLAY_BATTERY_ON,
+	display_bluetooth   : DISPLAY_BLUETOOTH_ON,
 	display_transitions : DISPLAY_TRANSITIONS_ON,
 	always_show_info    : ALWAYS_SHOW_INFO_OFF
 };

@@ -1,6 +1,6 @@
 #include <pebble.h>
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 	
 #define PEBBLE_WIDTH  144
 #define PEBBLE_HEIGHT 168
@@ -33,8 +33,8 @@ char batt_buffer[] = "100%+";
 // defaults, same as in the js side of things
 static int color_scheme        = 0;
 static int display_seconds     = 0;
-static int display_battery     = 0;
-static int display_bluetooth   = 0;
+static int display_battery     = 1;
+static int display_bluetooth   = 1;
 static int display_transitions = 1;
 static int always_show_info    = 0;
 
@@ -173,7 +173,7 @@ void update_battery_layer(BatteryChargeState charge_state) {
 void update_bluetooth_layer(bool connected) {
 	debug_log("In update_bluetooth_layer().");
 	if (display_bluetooth == 1) {
-		text_layer_set_text(bluetooth_layer, connected ? "BT" : "");
+		text_layer_set_text(bluetooth_layer, connected ? "BT" : "--");
 		layer_set_hidden(text_layer_get_layer(bluetooth_layer), false);
 	}
 	else if (display_bluetooth == 0) {
