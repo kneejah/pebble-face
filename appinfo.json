@@ -1,5 +1,5 @@
 {
-    "versionLabel": "1.2",
+    "versionLabel": "1.3",
     "uuid": "16bdb802-e72c-46cd-a4f0-eda952e07b9a",
     "appKeys": {
         "always_show_info": 6,
@@ -11,7 +11,7 @@
         "display_transitions": 5
     },
     "longName": "SimpleTextClock",
-    "versionCode": 3,
+    "versionCode": 4,
     "capabilities": [
         "configurable"
     ],
@@ -21,6 +21,13 @@
         "watchface": true
     },
     "resources": {
-        "media": []
+        "media": [
+            {
+                "menuIcon": true,
+                "type": "png",
+                "name": "MENU_SCREENSHOT_ICON",
+                "file": "images/menu_screenshot_icon.png"
+            }
+        ]
     }
 }
