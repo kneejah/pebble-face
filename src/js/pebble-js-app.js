@@ -17,9 +17,12 @@ var COLOR_SCHEME_BLACK      = 0,
 	DISPLAY_TRANSITIONS_OFF = 0,
 	DISPLAY_TRANSITIONS_ON  = 1,
 	ALWAYS_SHOW_INFO_OFF    = 0,
-	ALWAYS_SHOW_INFO_ON     = 1;
+	ALWAYS_SHOW_INFO_ON     = 1,
+	DATE_FORMAT_1           = 0,
+	DATE_FORMAT_2           = 1,
+	DATE_FORMAT_3           = 2;
 
-var version = "1.1";
+var version = "1.3";
 var config = {};
 var default_config = {
 	color_scheme        : COLOR_SCHEME_BLACK,
@@ -27,7 +30,8 @@ var default_config = {
 	display_battery     : DISPLAY_BATTERY_ON,
 	display_bluetooth   : DISPLAY_BLUETOOTH_ON,
 	display_transitions : DISPLAY_TRANSITIONS_ON,
-	always_show_info    : ALWAYS_SHOW_INFO_OFF
+	always_show_info    : ALWAYS_SHOW_INFO_OFF,
+	show_date_format    : DATE_FORMAT_1
 };
 
 var settings_name = "simple_clock_settings_v1";

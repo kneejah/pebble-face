@@ -5,6 +5,7 @@
         "always_show_info": 6,
         "display_seconds": 2,
         "get_config_values": 100,
+        "show_date_format": 7,
         "display_bluetooth": 4,
         "display_battery": 3,
         "color_scheme": 1,

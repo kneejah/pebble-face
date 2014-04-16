@@ -11,6 +11,7 @@
 #define DISPLAY_BLUETOOTH   4
 #define DISPLAY_TRANSITIONS 5
 #define ALWAYS_SHOW_INFO    6
+#define SHOW_DATE_FORMAT    7
 #define GET_CONFIG_VALUES   100
 
 Window *window;
@@ -30,6 +31,10 @@ char time_buffer[] = "00:00:00 AM";
 char date_buffer[] = "00/00/0000";
 char batt_buffer[] = "100%+";
 
+char date_format_1[] = "%m/%d/%Y";
+char date_format_2[] = "%d/%m/%Y";
+char date_format_3[] = "%Y/%m/%d";
+
 // defaults, same as in the js side of things
 static int color_scheme        = 0;
 static int display_seconds     = 0;
@@ -37,6 +42,7 @@ static int display_battery     = 1;
 static int display_bluetooth   = 1;
 static int display_transitions = 1;
 static int always_show_info    = 0;
+static int show_date_format    = 0;
 
 GRect text_box;
 static int showing_info = 0;
@@ -126,7 +132,16 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	text_layer_set_text(time_layer, time_buffer);
 	
 	// update the date text on the screen
-	strftime(date_buffer, sizeof("00/00/0000"), "%m/%d/%Y", tick_time);
+	if (show_date_format == 0) {
+		strftime(date_buffer, sizeof("00/00/0000"), date_format_1, tick_time);
+	}
+	else if (show_date_format == 1) {
+		strftime(date_buffer, sizeof("00/00/0000"), date_format_2, tick_time);
+	}
+	else if (show_date_format == 2) {
+		strftime(date_buffer, sizeof("00/00/0000"), date_format_3, tick_time);
+	}
+	
 	text_layer_set_text(date_layer, date_buffer);
 	
 	int seconds = tick_time->tm_sec;
@@ -363,6 +378,13 @@ void setup_config(void) {
 		has_config_values = false;
 	}
 	
+	if (persist_exists(SHOW_DATE_FORMAT)) {
+		show_date_format = persist_read_int(SHOW_DATE_FORMAT);
+	}
+	else {
+		has_config_values = false;
+	}
+	
 	if (has_config_values == false) {
 		app_timer_register(1000, request_config_values, NULL);
 	}
@@ -400,6 +422,10 @@ void appmessage_callback(DictionaryIterator *received, void *context) {
 			case ALWAYS_SHOW_INFO:
         		always_show_info = tuple->value->int32;
 				persist_write_int(ALWAYS_SHOW_INFO, always_show_info);
+        		break;
+			case SHOW_DATE_FORMAT:
+        		show_date_format = tuple->value->int32;
+				persist_write_int(SHOW_DATE_FORMAT, show_date_format);
         		break;
         }
         tuple = dict_read_next(received);
